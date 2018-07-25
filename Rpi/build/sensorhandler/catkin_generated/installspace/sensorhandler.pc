@@ -1,0 +1,8 @@
+prefix=/home/anil/Desktop/Team-IMU/Rpi/install
+
+Name: sensorhandler
+Description: Description of sensorhandler
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/anil/Desktop/Team-IMU/Rpi/install/lib 
+Requires: 

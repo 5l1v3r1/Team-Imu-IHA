@@ -1,0 +1,8 @@
+prefix=/home/anil/Desktop/Team-IMU/Rpi/install
+
+Name: servo
+Description: Description of servo
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/anil/Desktop/Team-IMU/Rpi/install/lib 
+Requires: 

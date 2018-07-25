@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   mavros
   nav_msgs
   rospy
-  rosserial_xbee
   sensor_msgs
   std_msgs
 )
