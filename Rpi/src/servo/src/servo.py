@@ -9,7 +9,7 @@ import math
 
 #It should be changed on the release.Because it might be the same port when pixhawk connected
 servoPin = 17
- # GPIO 17 for PWM with 50Hz (it depends on servo motor)
+# GPIO 17 for PWM with 50Hz (it depends on servo motor)
 p = GPIO.PWM(servoPin, 50)
 
 rate = rospy.Rate(10)
