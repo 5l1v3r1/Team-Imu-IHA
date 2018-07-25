@@ -5,21 +5,15 @@
   <description>The servo package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="anil@todo.todo">anil</maintainer>
+  <maintainer email="anilgurses98@gmail.com">anil</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
-  <!-- Commonly used license strings: -->
-  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>MIT</license>
 
 
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
-  <!-- Optional attribute type can be: website, bugtracker, or repository -->
-  <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/servo</url> -->
+  <url type="website">https://www.gursesanil.com</url>
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
