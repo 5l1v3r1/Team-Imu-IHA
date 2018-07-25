@@ -8,9 +8,9 @@ from sensor_msgs.msg import Imu, NavSatFix, NavSatStatus
 import math
 
 #It should be changed on the release.Because it might be the same port when pixhawk connected
-servoPIN = 17
-
-p = GPIO.PWM(servoPIN, 50) # GPIO 17 for PWM with 50Hz (it depends on servo motor)
+servoPin = 17
+ # GPIO 17 for PWM with 50Hz (it depends on servo motor)
+p = GPIO.PWM(servoPin, 50)
 
 rate = rospy.Rate(10)
 
