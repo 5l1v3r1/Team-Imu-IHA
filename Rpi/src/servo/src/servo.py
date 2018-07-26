@@ -12,14 +12,11 @@ servoPin = 17
 # GPIO 17 for PWM with 50Hz (it depends on servo motor)
 p = GPIO.PWM(servoPin, 50)
 
-rate = rospy.Rate(10)
+rate = rospy.Rate(20)
 
 isRotated = False
 current_mission = 0
 mission_data = []
-lastlat = 0
-lastlon = 0
-lastalt = 0
 lat = 0
 lon = 0
 alt = 0
@@ -54,7 +51,10 @@ class subscriberListener(rospy.SubscribeListener):
         if numPeers == 0:
             print("Topic has no subscriber")
 
-pub = rospy.Publisher('/rpi/mission/servoCom', String, queue_size=20, subscriber_listener=subscriberListener())
+
+pub = rospy.Publisher('/rpi/servoCom', String, queue_size=20, subscriber_listener=subscriberListener())
+pub_2 = rospy.Publisher('/rpi/mission', int, queue_size=20, subscriber_listener=subscriberListener())
+
 
 
 def ros_start(node):
@@ -104,21 +104,28 @@ def calculate(lat, lon, alt, xac, yac, zac):
             rotate_by_value(c)
             rospy.loginfo("Mission '{}' weight dropped".format(i))
             mission_data.remove(Mission(i, c, x, y, z, w))
+            current_mission = i
+            pub.publish("Mission '{}' weight dropped".format(i))
+            pub_2.publish(current_mission)
+            
         elif degree > 90 and degree < 270 and totaltime < 20:
             rotate_by_value(c)
             rospy.loginfo("Mission '{}' weight dropped".format(i))
             mission_data.remove(Mission(i, c, x, y, z, w))
+            current_mission = i
+            pub.publish("Mission '{}' weight dropped".format(i))
+            pub_2.publish(current_mission)
 
 
 if __name__ == '__main__':
 
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
+    GPIO.setup(servoPin, GPIO.OUT)
     GPIO.setwarnings(False)
     p.start(2.5)
 
     ros_start("servo")
-    rospy.Subscriber("/ground/mission/servoCom", String, getMission)
+    rospy.Subscriber("/ground/servoCom", String, getMission)
     rospy.Subscriber("/mavros/navsatfix", NavSatFix, getNavData)
     rospy.Subscriber("/mavros/imu/data", Imu, getAcceleration)
 
