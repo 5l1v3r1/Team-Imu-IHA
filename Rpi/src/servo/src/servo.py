@@ -86,35 +86,36 @@ def getAcceleration(data):
 
 def calculate(lat, lon, alt, xac, yac, zac):
     for i, c, x, y, z, w in mission_data:
-        xtime = abs(x - lat) / xac
-        ytime = abs(y - lon) / yac
+        if i == (current_mission + 1):
+            xtime = abs(x - lat) / xac
+            ytime = abs(y - lon) / yac
 
-        #This not required but I added that because of after takeoff calculations
-        #Locations can be measured from sea level and some coordinates is greater than 
-        #actual position.I want to avoid that error.
-        ztime = (abs(alt - z) / zac) + (abs(alt - z)/w*9.8)
+            #This not required but I added that because of after takeoff calculations
+            #Locations can be measured from sea level and some coordinates is greater than 
+            #actual position.I want to avoid that error.
+            ztime = (abs(alt - z) / zac) + (abs(alt - z)/w*9.8)
 
-        totaltime = math.sqrt(xtime**2 + ytime**2 + ztime**2)
+            totaltime = math.sqrt(xtime**2 + ytime**2 + ztime**2)
         
-        line1 = abs(0-math.sqrt(x**2 + y**2))
-        line2 = abs(0-math.sqrt(x**2 + y**2))
-        degree = math.asin(math.sqrt(line1**2 + line2**2))
+            line1 = abs(0-math.sqrt(x**2 + y**2))
+            line2 = abs(0-math.sqrt(x**2 + y**2))
+            degree = math.asin(math.sqrt(line1**2 + line2**2))
 
-        if degree == 90 or degree == 270 and totaltime < 15:
-            rotate_by_value(c)
-            rospy.loginfo("Mission '{}' weight dropped".format(i))
-            mission_data.remove(Mission(i, c, x, y, z, w))
-            current_mission = i
-            pub.publish("Mission '{}' weight dropped".format(i))
-            pub_2.publish(current_mission)
+            if degree == 90 or degree == 270 and totaltime < 15:
+                rotate_by_value(c)
+                rospy.loginfo("Mission '{}' weight dropped".format(i))
+                pub.publish("Mission '{}' weight dropped".format(i))
+                current_mission += 1
+                mission_data.remove(Mission(i, c, x, y, z, w))
+                pub_2.publish(i)
             
-        elif degree > 90 and degree < 270 and totaltime < 20:
-            rotate_by_value(c)
-            rospy.loginfo("Mission '{}' weight dropped".format(i))
-            mission_data.remove(Mission(i, c, x, y, z, w))
-            current_mission = i
-            pub.publish("Mission '{}' weight dropped".format(i))
-            pub_2.publish(current_mission)
+            elif degree > 90 and degree < 270 and totaltime < 20:
+                rotate_by_value(c)
+                rospy.loginfo("Mission '{}' weight dropped".format(i))
+                pub.publish("Mission '{}' weight dropped".format(i))
+                current_mission += 1
+                mission_data.remove(Mission(i, c, x, y, z, w))
+                pub_2.publish(i)
 
 
 if __name__ == '__main__':
@@ -126,7 +127,7 @@ if __name__ == '__main__':
 
     ros_start("servo")
     rospy.Subscriber("/ground/servoCom", String, getMission)
-    rospy.Subscriber("/mavros/navsatfix", NavSatFix, getNavData)
+    rospy.Subscriber("/mavros/navsatfix/data", NavSatFix, getNavData)
     rospy.Subscriber("/mavros/imu/data", Imu, getAcceleration)
 
 
