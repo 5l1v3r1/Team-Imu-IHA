@@ -3,6 +3,7 @@ import mavros
 import mavros_msgs
 import nav_msgs
 from std_msgs.msg import String
+from mavros_msgs.msg import State 
 from sensor_msgs.msg import Imu, NavSatFix, NavSatStatus, BatteryState, Temperature
 import math
 from datetime import datetime
@@ -23,9 +24,9 @@ zacc = 0
 lati = 0
 longi = 0
 alti = 0
-temp_data = 0
+temp_data = []
 land_pos = {"lat": 0, "lon": 0}
-
+errors = []
 
 current_state = State() 
 
@@ -60,6 +61,11 @@ class SensorStatus:
         self.yaw = yaw
         self.wind = wind
 
+class Error:
+    def __init__(self, error_cls, description):
+        self.error_cls = error_cls
+        self.description = description
+
 
 class flightStatus:
     def __init__(self, flightMode, flightTime, flight_remaining, mission_info):
@@ -67,12 +73,6 @@ class flightStatus:
         self.flightTime = flightTime
         self.flight_remaining = flight_remaining
         self.mission_info = mission_info
-
-class sytemStatus:
-    def __init__(self, error_info, currentConsump):
-        self.error_info = error_info
-        self.currentConsump = currentConsump
-        
 
 class batteryStat:
     def __init__(self, batcurrent, batt):
@@ -94,6 +94,15 @@ class subscriberListener(rospy.SubscribeListener):
 
 pub_general = rospy.Publisher('/rpi/sensorhandler', String, queue_size=50, subscriber_listener=subscriberListener())
 pub_system = rospy.Publisher('/rpi/system', String, queue_size=20, subscriber_listener=subscriberListener())
+
+def get_land_pos(data):
+    try:
+        rawData = data.data
+        splitted = rawData.split("-")
+        land_pos["lat"] = int(splitted[0])
+        land_pos["lon"] = int(splitted[1])
+    except:
+        errors.append(Error("Landing data","Didn't get the landing data"))
 
 def ros_start(node):
     rospy.init_node(node , anonymous=True)
@@ -118,7 +127,7 @@ def request(data):
         line2 = abs(0-math.sqrt(lt**2 + ln**2))
         angle = math.asin(math.sqrt(line1**2 + line2**2))
 
-        flmode, fltime, flrmn, info = flight_data[-1]
+        flmode, fltime, flrmn = flight_data[-1]
         pres, mtr_cyc, rll, ptch, yw, wnd = sensor_data[-1]
         latitude, longitude, altitude, xa, ya, za = nav_data[-1]
         
@@ -128,7 +137,10 @@ def request(data):
         ))
 
 def systemStat():
-
+    #System stat will publish battery and erro informations
+    batcrnt, percent = batt_data[-1]
+    errs = '/'.join(errors)
+    pub_system.publish("'{}'-'{}'".format(batcrnt, percent) + errs)
 
 def getFlightData():
     flmode = current_state
@@ -147,45 +159,62 @@ def getFlightData():
 
     totaltime = math.sqrt(xtime**2 + ytime**2 )
     flrmn = totaltime
-    flight_data.append(flightStatus(flmode, fltime, flrmn))
+    flight_data.append(flightStatus(flmode, fltime, flrmn, mission_id))
 
 
 def getBatData(data):
-    current = data.current
-    percentage = data.percentage
-    batt_data.append(batteryStat(current, percentage))
-
+    try:
+        current = data.current
+        percentage = data.percentage
+        batt_data.append(batteryStat(current, percentage))
+        systemStat()
+    except:
+        errors.append(Error("Batt data","Didn't get the batterry data"))
 
 
 def getMission(data):
-    #Data format should be [mission.id-cycle-lat-lon-height-ballweight]
-    rawData = data.data
-    splitted = rawData.split("-")
-    mission_id = int(splitted[0])
-    cycle = int(splitted[1])
-    lat = float(splitted[2])
-    lon = float(splitted[3])
-    height = int(splitted[4])
-    weight = float(splitted[5])
-    mission_data.append(Mission(mission_id,cycle, lat, lon, height, weight))
-
+    try:
+        #Data format should be [mission.id-cycle-lat-lon-height-ballweight]
+        rawData = data.data
+        splitted = rawData.split("-")
+        mission_id = int(splitted[0])
+        cycle = int(splitted[1])
+        lat = float(splitted[2])
+        lon = float(splitted[3])
+        height = int(splitted[4])
+        weight = float(splitted[5])
+        mission_data.append(Mission(mission_id,cycle, lat, lon, height, weight))
+    except:
+        errors.append(Error("Mission data","Didn't get the mission data"))
 
 def ImuData(data):
-    xacc, yacc, zacc = data.linear_acceleration.x, data.linear_acceleration.y, data.linear_acceleration.z
-    nav_data.append(Navstatus(lati, longi, alti, xacc, yacc, zacc))
+    try:
+        xacc, yacc, zacc = data.linear_acceleration.x, data.linear_acceleration.y, data.linear_acceleration.z
+        nav_data.append(Navstatus(lati, longi, alti, xacc, yacc, zacc))
+    except:
+        errors.append(Error("IMU data","Didn't get the IMU  data"))
 
 def getNavData(data):
-    lati = data.latitude
-    longi = data.longitude
-    alti = data.altitude
-    nav_data.append(Navstatus(lati, longi, alti, xacc, yacc, zacc))
+    try:
+        lati = data.latitude
+        longi = data.longitude
+        alti = data.altitude
+        nav_data.append(Navstatus(lati, longi, alti, xacc, yacc, zacc))
+    except:
+        errors.append(Error("Navigation data","Didn't get the navigation data"))
 
 def getMissionid(data):
-    mission_id = data.data
+    try:
+        mission_id = data.data
+    except:
+        errors.append(Error("Mission data","Didn't get the mission data"))
 
 def getTemp(data):
-    temp = data.temperature
-    temp_data.append(temp)
+    try:
+        temp = data.temperature
+        temp_data.append(temp)
+    except:
+        errors.append(Error("Temperature data","Didn't get the temp data"))
     
 
 if __name__ == '__main__':
@@ -201,5 +230,6 @@ if __name__ == '__main__':
     rospy.Subscriber("/mavros/batterystate/data", BatteryState, getBatData)
     rospy.Subscriber("/mavros/temperature/data", Temperature, getTemp)
     rospy.Subscriber(mavros.get_topic('state'), State, state_cb)
+    rospy.Subscriber("/ground/land_pos", String, get_land_pos)
 
     rospy.spin()
