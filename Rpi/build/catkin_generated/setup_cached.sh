@@ -9,6 +9,7 @@
 # modified environment variables
 export CMAKE_PREFIX_PATH="/home/anil/Desktop/Team-IMU/Rpi/devel:$CMAKE_PREFIX_PATH"
 export LD_LIBRARY_PATH="/home/anil/Desktop/Team-IMU/Rpi/devel/lib:$LD_LIBRARY_PATH"
+export PKG_CONFIG_PATH="/home/anil/Desktop/Team-IMU/Rpi/devel/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD="/home/anil/Desktop/Team-IMU/Rpi/build"
 export ROSLISP_PACKAGE_DIRECTORIES="/home/anil/Desktop/Team-IMU/Rpi/devel/share/common-lisp"
 export ROS_PACKAGE_PATH="/home/anil/Desktop/Team-IMU/Rpi/src:$ROS_PACKAGE_PATH"

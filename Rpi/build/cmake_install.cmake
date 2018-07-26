@@ -117,6 +117,7 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   include("/home/anil/Desktop/Team-IMU/Rpi/build/gtest/cmake_install.cmake")
+  include("/home/anil/Desktop/Team-IMU/Rpi/build/missionhandler/cmake_install.cmake")
   include("/home/anil/Desktop/Team-IMU/Rpi/build/sensorhandler/cmake_install.cmake")
   include("/home/anil/Desktop/Team-IMU/Rpi/build/servo/cmake_install.cmake")
 
