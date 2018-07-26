@@ -3,13 +3,10 @@ import mavros
 import mavros_msgs
 import nav_msgs
 from std_msgs.msg import String
-from mavros_msgs.msg import State 
+from mavros_msgs.msg import State , VFR_HUD 
 from sensor_msgs.msg import Imu, NavSatFix, NavSatStatus, BatteryState, Temperature
 import math
-from datetime import datetime
 import time
-
-
 
 mission_id = 0
 mission_data = []
@@ -27,8 +24,10 @@ alti = 0
 temp_data = []
 land_pos = {"lat": 0, "lon": 0}
 errors = []
-
-current_state = State() 
+wind = 0
+mtr_cycle = 0
+pressur = 0
+vfr_data = []
 
 def state_cb(state):
     global current_state
@@ -60,6 +59,15 @@ class SensorStatus:
         self.pitch = pitch
         self.yaw = yaw
         self.wind = wind
+
+class vfr:
+    def __init__(self, airspeed, groundspeed, heading, throttle, altitude, climb):
+        self.airspeed = airspeed
+        self.groundspeed = groundspeed
+        self.heading = heading
+        self.throttle = throttle
+        self.altitude = altitude
+        self.climb = climb
 
 class Error:
     def __init__(self, error_cls, description):
@@ -93,7 +101,8 @@ class subscriberListener(rospy.SubscribeListener):
 
 
 pub_general = rospy.Publisher('/rpi/sensorhandler', String, queue_size=50, subscriber_listener=subscriberListener())
-pub_system = rospy.Publisher('/rpi/system', String, queue_size=20, subscriber_listener=subscriberListener())
+pub_system = rospy.Publisher('/rpi/system', String, queue_size=20)
+pub_vfr = rospy.Publisher('/rpi/vfr', String,queue_size=20)
 
 def get_land_pos(data):
     try:
@@ -107,6 +116,7 @@ def get_land_pos(data):
 def ros_start(node):
     rospy.init_node(node , anonymous=True)
 
+        
 def request(data):
     req = data.data
     
@@ -141,6 +151,14 @@ def systemStat():
     batcrnt, percent = batt_data[-1]
     errs = '/'.join(errors)
     pub_system.publish("'{}'-'{}'".format(batcrnt, percent) + errs)
+
+
+def vfrStat():
+
+    pub_vfr.publish("'{}'-'{}'-'{}'-'{}'-'{}'-'{}'-".format(
+        vfr_data[-1].airspeed, vfr_data[-1].altitude, vfr_data[-1].climb, vfr_data[-1].groundspeed, vfr_data[-1].heading, vfr_data[-1].throttle
+    ))    
+
 
 def getFlightData():
     flmode = current_state
@@ -187,12 +205,25 @@ def getMission(data):
     except:
         errors.append(Error("Mission data","Didn't get the mission data"))
 
+
+def getVfrData(data):   
+    try:
+        vfr_data.append(vfr(data.airspeed, data.groundspeed, data.heading, data.throttle, data.altitude, data.climb))
+        vfrStat()
+    except:
+         errors.append(Error("vfr data","Didn't get the vfr data"))
+
+
+
 def ImuData(data):
     try:
         xacc, yacc, zacc = data.linear_acceleration.x, data.linear_acceleration.y, data.linear_acceleration.z
         nav_data.append(Navstatus(lati, longi, alti, xacc, yacc, zacc))
+        rll, ptch, yw = data.orientation.y, data.orientation.x, data.orientation.z
+
     except:
         errors.append(Error("IMU data","Didn't get the IMU  data"))
+
 
 def getNavData(data):
     try:
@@ -203,11 +234,13 @@ def getNavData(data):
     except:
         errors.append(Error("Navigation data","Didn't get the navigation data"))
 
+
 def getMissionid(data):
     try:
         mission_id = data.data
     except:
         errors.append(Error("Mission data","Didn't get the mission data"))
+
 
 def getTemp(data):
     try:
@@ -231,5 +264,6 @@ if __name__ == '__main__':
     rospy.Subscriber("/mavros/temperature/data", Temperature, getTemp)
     rospy.Subscriber(mavros.get_topic('state'), State, state_cb)
     rospy.Subscriber("/ground/land_pos", String, get_land_pos)
+    rospy.Subscriber("/mavros/vfrhud/data", VFR_HUD, getVfrData)
 
     rospy.spin()
