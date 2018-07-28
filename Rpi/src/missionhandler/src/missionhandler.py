@@ -34,9 +34,6 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
     def tearDown(self):
         super(MavrosOffboardPosctlTest, self).tearDown()
 
-    #
-    # Helper methods
-    #
     def send_pos(self):
         rate = rospy.Rate(10)  # Hz
         self.pos.header = Header()
@@ -136,7 +133,7 @@ class MavrosOffboardPosctlTest(MavrosTestCommon):
 
 if __name__ == '__main__':
     import rostest
-    rospy.init_node('test_node', anonymous=True)
+    rospy.init_node('mission_node', anonymous=True)
 
-    rostest.rosrun(PKG, 'mavros_offboard_posctl_test',
+    
 MavrosOffboardPosctlTest)
